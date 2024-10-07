@@ -3,42 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRUD App</title>
+    <title>CRUD Application</title>
+    <!-- Link do Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
-    <h1>CRUD App</h1>
-    <form id="itemForm">
-        <input type="text" id="itemName" placeholder="Nome do item" required>
-        <button type="submit">Adicionar Item</button>
-    </form>
-    <ul id="itemList"></ul>
-
-    <script>
-        document.getElementById('itemForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const itemName = document.getElementById('itemName').value;
-            await fetch('/items', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: itemName })
-            });
-            document.getElementById('itemName').value = '';
-            loadItems();
-        };
-
-        const loadItems = async () => {
-            const response = await fetch('/items');
-            const items = await response.json();
-            const itemList = document.getElementById('itemList');
-            itemList.innerHTML = '';
-            items.forEach(item => {
-                const li = document.createElement('li');
-                li.textContent = item.name;
-                itemList.appendChild(li);
-            });
-        };
-
-        loadItems();
-    </script>
+    <div class="container mt-5">
+        <h1 class="text-center">Lista de Usuários</h1>
+        <a href="/create" class="btn btn-primary mb-3">Criar Usuário</a>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.name }}</td>
+                    <td>
+                        <a href="{{ url_for('edit_user', id=user.id) }}" class="btn btn-warning btn-sm">Editar</a>
+                        <a href="{{ url_for('delete_user', id=user.id) }}" class="btn btn-danger btn-sm">Deletar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <!-- Link do Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>

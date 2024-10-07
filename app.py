@@ -1,49 +1,53 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
 
-class Item(db.Model):
+# Modelo de usuário
+class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
 
-@app.before_first_request
-def create_tables():
-    db.create_all()
+# Inicializar o banco de dados
+def init_db():
+    with app.app_context():
+        db.create_all()
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    users = User.query.all()  # Recuperar todos os usuários do banco de dados
+    return render_template('index.html', users=users)
 
-@app.route('/items', methods=['POST'])
-def add_item():
-    data = request.json
-    new_item = Item(name=data['name'])
-    db.session.add(new_item)
+@app.route('/create', methods=['GET', 'POST'])
+def create_user():
+    if request.method == 'POST':
+        name = request.form['name']
+        new_user = User(name=name)
+        db.session.add(new_user)
+        db.session.commit()
+        return redirect(url_for('index'))
+    return render_template('create.html')
+
+@app.route('/edit/<int:id>', methods=['GET', 'POST'])
+def edit_user(id):
+    user = User.query.get_or_404(id)
+    if request.method == 'POST':
+        user.name = request.form['name']
+        db.session.commit()
+        return redirect(url_for('index'))
+    return render_template('create.html', user=user)
+
+@app.route('/delete/<int:id>')
+def delete_user(id):
+    user = User.query.get_or_404(id)
+    db.session.delete(user)
     db.session.commit()
-    return jsonify({'id': new_item.id}), 201
-
-@app.route('/items', methods=['GET'])
-def get_items():
-    items = Item.query.all()
-    return jsonify([{'id': item.id, 'name': item.name} for item in items])
-
-@app.route('/items/<int:id>', methods=['PUT'])
-def update_item(id):
-    data = request.json
-    item = Item.query.get_or_404(id)
-    item.name = data['name']
-    db.session.commit()
-    return jsonify({'id': item.id, 'name': item.name})
-
-@app.route('/items/<int:id>', methods=['DELETE'])
-def delete_item(id):
-    item = Item.query.get_or_404(id)
-    db.session.delete(item)
-    db.session.commit()
-    return '', 204
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
+    init_db()  # Inicializar o banco de dados
     app.run(host='0.0.0.0', port=5000)
